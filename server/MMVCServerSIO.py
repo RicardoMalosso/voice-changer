@@ -44,6 +44,7 @@ def setupArgParser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--logLevel", type=str, default="error", help="Log level info|critical|error. (default: error)")
     parser.add_argument("-p", type=int, default=18888, help="port")
+    parser.add_argument("--studio", action="store_true", help="Open the Studio interface with --open-app")
     parser.add_argument("--open-app", action="store_true", help="Open the local VCClient UI after the HTTP server is ready")
     parser.add_argument("--https", type=parse_bool, default=False, help="use https")
     parser.add_argument("--test_connect", type=str, default="8.8.8.8", help="test connect to detect ip in https mode. default 8.8.8.8")
@@ -256,8 +257,9 @@ if __name__ == "__main__":
         p.start()
         try:
             if args.open_app:
-                if not open_when_ready(PORT, p, NATIVE_CLIENT_FILE_WIN):
-                    logger.warning(f"VCClient window did not open. Check the server log or open http://localhost:{PORT}/front/")
+                frontend = "studio" if args.studio else "front"
+                if not open_when_ready(PORT, p, NATIVE_CLIENT_FILE_WIN, frontend=frontend):
+                    logger.warning(f"VCClient window did not open. Check the server log or open http://localhost:{PORT}/{frontend}/")
                 p.join()
             elif sys.platform.startswith("win"):
                 process = subprocess.Popen([NATIVE_CLIENT_FILE_WIN, "--disable-gpu", "-u", f"http://localhost:{PORT}/"])
@@ -276,3 +278,4 @@ if __name__ == "__main__":
                 p.join()
         except Exception as e:
             logger.error(f"[Voice Changer] Client Launch Exception, {e}")
+

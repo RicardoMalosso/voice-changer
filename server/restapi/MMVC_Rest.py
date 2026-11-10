@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 
 from restapi.mods.trustedorigin import TrustedOriginMiddleware
 from fastapi import FastAPI, Request, Response, HTTPException
@@ -12,6 +13,7 @@ from voice_changer.VoiceChangerManager import VoiceChangerManager
 
 from restapi.MMVC_Rest_Hello import MMVC_Rest_Hello
 from restapi.Twitch import twitch_router
+from restapi.Studio import studio_router
 from restapi.MMVC_Rest_VoiceChanger import MMVC_Rest_VoiceChanger
 from restapi.MMVC_Rest_Fileuploader import MMVC_Rest_Fileuploader
 from const import MODEL_DIR_STATIC, UPLOAD_DIR, getFrontendPath, TMP_DIR
@@ -107,9 +109,14 @@ class MMVC_Rest:
             app_fastapi.include_router(fileUploader.router)
 
             app_fastapi.include_router(twitch_router(voiceChangerManager))
+            app_fastapi.include_router(studio_router(voiceChangerManager))
+            studio_path = Path(__file__).resolve().parents[1] / "studio"
+            if studio_path.is_dir():
+                app_fastapi.mount("/studio", StaticFiles(directory=studio_path, html=True), name="studio")
 
             cls._instance = app_fastapi
             logger.info("[Voice Changer] MMVC_Rest initializing... done.")
             return cls._instance
 
         return cls._instance
+

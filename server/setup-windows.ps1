@@ -83,14 +83,15 @@ finally {
 }
 
 Write-Host "Setup complete. From server, start VCClient with:"
-Write-Host '..\.venv-vcclient\Scripts\python.exe MMVCServerSIO.py --host 127.0.0.1 -p 18888 --open-app'
+Write-Host '..\.venv-vcclient\Scripts\python.exe MMVCServerSIO.py --host 127.0.0.1 -p 18888 --open-app --studio'
 
 if ($Launch) {
     Push-Location $Server
     try {
-        Invoke-Checked $Python @("MMVCServerSIO.py", "--host", "127.0.0.1", "-p", "18888", "--open-app")
+        Invoke-Checked $Python @("MMVCServerSIO.py", "--host", "127.0.0.1", "-p", "18888", "--open-app", "--studio")
     }
     finally {
         Pop-Location
     }
 }
+
