@@ -1,9 +1,23 @@
 # Install the full VCClient source environment, separate from the Twitch preview.
+param([switch]$Launch)
+
 $ErrorActionPreference = "Stop"
 $Server = $PSScriptRoot
 $Project = Split-Path $Server -Parent
 $Environment = Join-Path $Project ".venv-vcclient"
 $Python = Join-Path $Environment "Scripts\python.exe"
+$Runtime = Join-Path $Project ".vcclient-runtime"
+
+# Some Windows installs still point TEMP or pip's cache at an offline drive.
+# Keep build files on the checkout drive for this setup process and its children.
+$TempDirectory = Join-Path $Runtime "tmp"
+$PipCache = Join-Path $Runtime "pip-cache"
+New-Item -ItemType Directory -Path $TempDirectory, $PipCache -Force | Out-Null
+$env:TEMP = $TempDirectory
+$env:TMP = $TempDirectory
+$env:TMPDIR = $TempDirectory
+$env:PIP_CACHE_DIR = $PipCache
+Write-Host "Using build temp directory: $TempDirectory"
 
 function Invoke-Checked {
     param([string]$Program, [string[]]$Arguments)
@@ -34,8 +48,8 @@ if (-not (Test-Path $Python)) {
     $PreviousPythonDirectory = $env:UV_PYTHON_INSTALL_DIR
     $PreviousUvCache = $env:UV_CACHE_DIR
     try {
-        $env:UV_PYTHON_INSTALL_DIR = Join-Path $Project ".vcclient-runtime\python"
-        $env:UV_CACHE_DIR = Join-Path $Project ".vcclient-runtime\uv-cache"
+        $env:UV_PYTHON_INSTALL_DIR = Join-Path $Runtime "python"
+        $env:UV_CACHE_DIR = Join-Path $Runtime "uv-cache"
         Invoke-Checked $Uv @("venv", "--python", "3.10", "--seed", $Environment)
     }
     finally {
@@ -70,3 +84,13 @@ finally {
 
 Write-Host "Setup complete. From server, start VCClient with:"
 Write-Host '..\.venv-vcclient\Scripts\python.exe MMVCServerSIO.py --host 127.0.0.1 -p 18888 --open-app'
+
+if ($Launch) {
+    Push-Location $Server
+    try {
+        Invoke-Checked $Python @("MMVCServerSIO.py", "--host", "127.0.0.1", "-p", "18888", "--open-app")
+    }
+    finally {
+        Pop-Location
+    }
+}

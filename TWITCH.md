@@ -21,11 +21,10 @@ All three trigger types use the same selected model and duration. Additional tri
 Use Windows x64 and an NVIDIA driver. If Python 3.10 is missing, the setup script downloads it into the checkout. The script can bootstrap from the Python you already use to run the preview. From PowerShell in the fork's `server` directory:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\setup-windows.ps1
-..\.venv-vcclient\Scripts\python.exe MMVCServerSIO.py --host 127.0.0.1 -p 18888 --open-app
+powershell -ExecutionPolicy Bypass -File .\setup-windows.ps1 -Launch
 ```
 
-The setup script creates `.venv-vcclient` inside the checkout, installs the matching CUDA PyTorch wheels and the full source dependencies, then checks that RVC imports and CUDA is available. Native Windows is an experimental source setup. If setup fails, use the first error printed by the script to diagnose the dependency that failed.
+The setup script creates `.venv-vcclient` inside the checkout, installs the matching CUDA PyTorch wheels and the full source dependencies, then checks that RVC imports and CUDA is available. Setup uses `.vcclient-runtime/tmp` and `.vcclient-runtime/pip-cache` in the checkout, which also works when Windows still points temporary folders at an offline drive. Native Windows is an experimental source setup. If setup fails, use the first error printed by the script to diagnose the dependency that failed.
 
 ## Quick Windows test without CUDA
 
