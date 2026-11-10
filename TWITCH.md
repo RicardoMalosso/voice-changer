@@ -16,6 +16,17 @@ All three trigger types use the same selected model and duration. Additional tri
 - Startup also attempts to seed the default sample voices if the configured model directory does not already exist. If it exists, sample seeding is skipped.
 - A particular model from voice-models.com is a separate download. Download and extract its ZIP, then use VCClient's model slot editor to upload the `.pth` and optional `.index`.
 
+## Full Windows setup
+
+Use 64-bit Python 3.10 and an NVIDIA driver. The Twitch preview has its own environment and does not install the voice engine. From PowerShell in the fork's `server` directory:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup-windows.ps1
+..\.venv-vcclient\Scripts\python.exe MMVCServerSIO.py --host 127.0.0.1 -p 18888 --open-app
+```
+
+The setup script creates `.venv-vcclient` inside the checkout, installs the matching CUDA PyTorch wheels and the full source dependencies, then checks that RVC imports and CUDA is available. Native Windows is an experimental source setup. If setup fails, use the first error printed by the script to diagnose the dependency that failed.
+
 ## Quick Windows test without CUDA
 
 From a PowerShell window in the fork checkout on the `codex/twitch-integration` branch, use:
