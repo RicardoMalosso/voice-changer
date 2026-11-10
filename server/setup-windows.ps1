@@ -1,7 +1,8 @@
 # Install the full VCClient source environment, separate from the Twitch preview.
 $ErrorActionPreference = "Stop"
 $Server = $PSScriptRoot
-$Environment = Join-Path (Split-Path $Server -Parent) ".venv-vcclient"
+$Project = Split-Path $Server -Parent
+$Environment = Join-Path $Project ".venv-vcclient"
 $Python = Join-Path $Environment "Scripts\python.exe"
 
 function Invoke-Checked {
@@ -14,7 +15,33 @@ function Invoke-Checked {
 
 if (-not (Test-Path $Python)) {
     Write-Host "Creating the full VCClient environment with Python 3.10..."
-    Invoke-Checked "py" @("-3.10", "-m", "venv", $Environment)
+    $UvCommand = Get-Command uv -CommandType Application -ErrorAction SilentlyContinue
+    if ($UvCommand) {
+        $Uv = $UvCommand.Source
+    }
+    else {
+        $Bootstrap = Join-Path $Project ".venv-vcclient-bootstrap"
+        $BootstrapPython = Join-Path $Bootstrap "Scripts\python.exe"
+        $Uv = Join-Path $Bootstrap "Scripts\uv.exe"
+        if (-not (Test-Path $BootstrapPython)) {
+            Invoke-Checked "python" @("-m", "venv", $Bootstrap)
+        }
+        if (-not (Test-Path $Uv)) {
+            Invoke-Checked $BootstrapPython @("-m", "pip", "install", "uv==0.8.22")
+        }
+    }
+
+    $PreviousPythonDirectory = $env:UV_PYTHON_INSTALL_DIR
+    $PreviousUvCache = $env:UV_CACHE_DIR
+    try {
+        $env:UV_PYTHON_INSTALL_DIR = Join-Path $Project ".vcclient-runtime\python"
+        $env:UV_CACHE_DIR = Join-Path $Project ".vcclient-runtime\uv-cache"
+        Invoke-Checked $Uv @("venv", "--python", "3.10", "--seed", $Environment)
+    }
+    finally {
+        $env:UV_PYTHON_INSTALL_DIR = $PreviousPythonDirectory
+        $env:UV_CACHE_DIR = $PreviousUvCache
+    }
 }
 Invoke-Checked $Python @("-c", "import struct, sys; assert sys.version_info[:2] == (3, 10) and struct.calcsize('P') == 8, 'Install 64-bit Python 3.10 for VCClient.'")
 

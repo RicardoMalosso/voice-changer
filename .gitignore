@@ -78,3 +78,5 @@ server/model_dir_static/Beatrice-JVS
 
 .venv-vcclient/
 .venv-twitch-test/
+.venv-vcclient-bootstrap/
+.vcclient-runtime/

@@ -18,7 +18,7 @@ All three trigger types use the same selected model and duration. Additional tri
 
 ## Full Windows setup
 
-Use 64-bit Python 3.10 and an NVIDIA driver. The Twitch preview has its own environment and does not install the voice engine. From PowerShell in the fork's `server` directory:
+Use Windows x64 and an NVIDIA driver. If Python 3.10 is missing, the setup script downloads it into the checkout. The script can bootstrap from the Python you already use to run the preview. From PowerShell in the fork's `server` directory:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\setup-windows.ps1
