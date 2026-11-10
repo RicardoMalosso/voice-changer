@@ -62,8 +62,12 @@ def _generateSampleJsons(sampleJsonUrls: list[str]):
 def _generateSampleList(sampleJsons: list[str]):
     samples: list[ModelSamples] = []
     for file in sampleJsons:
-        with open(file, "r", encoding="utf-8") as f:
-            jsonDict = json.load(f)
+        try:
+            with open(file, "r", encoding="utf-8") as f:
+                jsonDict = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            logger.warning("Sample catalog unavailable: %s", file)
+            continue
         for vcType in jsonDict:
             for sampleParams in jsonDict[vcType]:
                 sample = generateModelSample(sampleParams)
@@ -230,3 +234,4 @@ def _downloadSamples(samples: list[ModelSamples], sampleModelIds: list[Tuple[str
                 else:
                     slotInfo = DiffusionSVCModelSlotGenerator._setInfoByPytorch(slotInfo)
                 modelSlotManager.save_model_slot(targetSlotIndex, slotInfo)
+

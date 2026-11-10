@@ -3,7 +3,8 @@ from dataclasses import dataclass, asdict
 import numpy as np
 from const import SERVER_DEVICE_SAMPLE_RATES
 
-from queue import Queue
+from queue import Empty, Queue
+from voice_changer.Local.StudioCapture import StudioCapture
 from mods.log_control import VoiceChangaerLogger
 
 from voice_changer.Local.AudioDeviceList import checkSamplingRate, list_audio_device
@@ -102,6 +103,7 @@ class ServerDevice:
         self.outQueue = Queue()
         self.monQueue = Queue()
         self.performance = []
+        self.studio_capture = StudioCapture()
 
         # setting change確認用
         self.currentServerInputDeviceId = -1
@@ -136,6 +138,7 @@ class ServerDevice:
         unpackedData = librosa.to_mono(indata.T) * 32768.0
         unpackedData = unpackedData.astype(np.int16)
         out_wav, times = self.serverDeviceCallbacks.on_request(unpackedData)
+        self.studio_capture.push(unpackedData, out_wav, self.currentAudioSampleRate)
         return out_wav, times
 
     def _processDataWithTime(self, indata: np.ndarray):
@@ -179,9 +182,16 @@ class ServerDevice:
 
     def audioOutput_callback(self, outdata: np.ndarray, frames, times, status):
         try:
-            out_wav = self.outQueue.get()
-            while self.outQueue.qsize() > 0:
-                self.outQueue.get()
+            outdata.fill(0)
+            try:
+                out_wav = self.outQueue.get_nowait()
+            except Empty:
+                return
+            for _ in range(self.outQueue.qsize()):
+                try:
+                    out_wav = self.outQueue.get_nowait()
+                except Empty:
+                    break
             outputChannels = outdata.shape[1]
             outdata[:] = np.repeat(out_wav, outputChannels).reshape(-1, outputChannels) / 32768.0
             outdata[:] = outdata * self.settings.serverOutputAudioGain
@@ -192,9 +202,16 @@ class ServerDevice:
 
     def audioMonitor_callback(self, outdata: np.ndarray, frames, times, status):
         try:
-            mon_wav = self.monQueue.get()
-            while self.monQueue.qsize() > 0:
-                self.monQueue.get()
+            outdata.fill(0)
+            try:
+                mon_wav = self.monQueue.get_nowait()
+            except Empty:
+                return
+            for _ in range(self.monQueue.qsize()):
+                try:
+                    mon_wav = self.monQueue.get_nowait()
+                except Empty:
+                    break
             outputChannels = outdata.shape[1]
             outdata[:] = np.repeat(mon_wav, outputChannels).reshape(-1, outputChannels) / 32768.0
             outdata[:] = outdata * self.settings.serverMonitorAudioGain
@@ -320,6 +337,7 @@ class ServerDevice:
 
                 # Deviceがなかったらいったんスリープ
                 if serverInputAudioDevice is None or serverOutputAudioDevice is None:
+                    self.studio_capture.error = "The selected microphone or output is unavailable."
                     print("serverInputAudioDevice or serverOutputAudioDevice is None")
                     time.sleep(2)
                     continue
@@ -372,6 +390,7 @@ class ServerDevice:
                     if serverMonitorAudioDevice is not None:
                         print(f"  [Monitor]: {availableMonitorSampleRate}")
 
+                    self.studio_capture.error = "The selected devices do not support this sample rate."
                     print("continue... ")
                     time.sleep(2)
                     continue
@@ -417,6 +436,7 @@ class ServerDevice:
                         raise RuntimeError(f"Unknown ServerDeviceMode: {serverDeviceMode}")
 
                 except Exception as e:
+                    self.studio_capture.error = str(e)
                     print("[Voice Changer] processing, ex:", e)
                     import traceback
 
@@ -445,3 +465,4 @@ class ServerDevice:
         elif key in EditableServerDeviceSettings["floatData"]:
             setattr(self.settings, key, float(val))
         return self.get_info()
+

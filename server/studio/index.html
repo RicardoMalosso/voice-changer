@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PacVoice Studio</title>
+  <link rel="stylesheet" href="studio.css">
+  <script defer src="studio.js"></script>
+</head>
+<body>
+  <header>
+    <div><p class="eyebrow">VCClient / RVC</p><h1>PacVoice Studio</h1></div>
+    <div class="language" aria-label="Language / Idioma">
+      <button data-language="pt-BR" type="button">🇧🇷 Português</button>
+      <button data-language="en-US" type="button">🇨🇦 English</button>
+    </div>
+  </header>
+  <main>
+    <section class="health">
+      <div><strong id="connection" role="status"></strong><p id="hardware"></p></div>
+      <button id="refresh" data-pt="Atualizar dispositivos">Refresh devices</button>
+    </section>
+    <div id="notice" role="alert" hidden></div>
+    <div class="grid">
+      <section class="panel">
+        <h2 data-pt="Áudio ao vivo">Live audio</h2>
+        <form id="audio">
+          <label><span data-pt="Microfone">Microphone</span><select name="microphone" required></select></label>
+          <label><span data-pt="Saída (OBS ou fones)">Output (OBS or headphones)</span><select name="output" required></select></label>
+          <label><span data-pt="Monitoramento">Monitoring</span><select name="monitor"></select></label>
+          <details><summary data-pt="Configuração de áudio">Audio configuration</summary>
+            <label><span data-pt="Taxa de amostragem">Sample rate</span><select name="rate"><option value="48000">48 kHz</option><option value="44100">44.1 kHz</option></select></label>
+            <label><span data-pt="Tamanho do bloco">Block size</span><input name="chunk" type="number" min="16" max="512" value="128" required></label>
+          </details>
+          <p class="hint" data-pt="Para OBS com VB-CABLE, selecione CABLE Input aqui e CABLE Output no OBS.">For OBS with VB-CABLE, select CABLE Input here and CABLE Output in OBS.</p>
+          <div class="buttons"><button id="start" type="submit" class="primary" data-pt="Iniciar áudio">Start audio</button><button id="stop" type="button" data-pt="Parar">Stop</button></div>
+        </form>
+        <div class="meters">
+          <label><span data-pt="Entrada">Input</span><meter id="input-level" min="0" max="1" value="0"></meter></label>
+          <label><span data-pt="Saída do motor">Engine output</span><meter id="output-level" min="0" max="1" value="0"></meter></label>
+        </div>
+        <p id="audio-status" role="status"></p>
+      </section>
+      <section class="panel">
+        <h2 data-pt="Modelo de voz">Voice model</h2>
+        <form id="select-model">
+          <label><span data-pt="Modelo carregado">Loaded model</span><select name="slot" required></select></label>
+          <button type="submit" data-pt="Carregar modelo">Load model</button>
+        </form>
+        <details><summary data-pt="Importar modelo RVC">Import RVC model</summary>
+          <form id="import-model">
+            <label><span data-pt="Arquivo ZIP, PTH ou ONNX">ZIP, PTH, or ONNX file</span><input name="model" type="file" accept=".zip,.pth,.onnx" required></label>
+            <label><span data-pt="Índice opcional para PTH ou ONNX">Optional index for PTH or ONNX</span><input name="index" type="file" accept=".index"></label>
+            <label class="check"><input name="trusted" type="checkbox" required><span data-pt="Confio na origem destes arquivos.">I trust the source of these files.</span></label>
+            <button type="submit" data-pt="Importar e carregar">Import and load</button>
+          </form>
+        </details>
+        <details><summary data-pt="Ajustes da voz">Voice tuning</summary>
+          <form id="tuning">
+            <label><span data-pt="Tom (semitons)">Pitch (semitones)</span><input name="tran" type="number" min="-36" max="36" value="0" required></label>
+            <label><span data-pt="Mistura do índice">Index mix</span><input name="indexRatio" type="number" min="0" max="1" step="0.05" value="0" required></label>
+            <label><span data-pt="Ganho de entrada">Input gain</span><input name="serverInputAudioGain" type="number" min="0" max="3" step="0.05" value="1" required></label>
+            <label><span data-pt="Ganho de saída">Output gain</span><input name="serverOutputAudioGain" type="number" min="0" max="3" step="0.05" value="1" required></label>
+            <button type="submit" data-pt="Aplicar ajustes">Apply tuning</button>
+            <button id="defaults" type="button" data-pt="Salvar ajustes no modelo">Save model defaults</button>
+          </form>
+        </details>
+        <button id="export" type="button" data-pt="Exportar ONNX">Export ONNX</button>
+        <a id="export-result" hidden data-pt="Baixar ONNX">Download ONNX</a>
+      </section>
+      <section class="panel">
+        <h2 data-pt="Gravar e comparar">Record and compare</h2>
+        <p class="hint" data-pt="Capture até 15 segundos da mesma fala, antes e depois da conversão.">Capture up to 15 seconds of the same take, before and after conversion.</p>
+        <div class="buttons"><button id="record" data-pt="Gravar amostra">Record sample</button><button id="finish" data-pt="Finalizar gravação">Finish recording</button></div>
+        <p id="record-status" role="status"></p>
+        <label><span data-pt="Original">Original</span><audio id="original" controls preload="none"></audio></label>
+        <label><span data-pt="Processado">Processed</span><audio id="converted" controls preload="none"></audio></label>
+      </section>
+      <section class="panel">
+        <h2>Twitch</h2>
+        <p class="hint" data-pt="Ative a voz selecionada por chat, Bits ou Pontos do Canal.">Trigger the selected voice via chat, Bits, or Channel Points.</p>
+        <form id="twitch">
+          <label><span data-pt="Comando">Command</span><input name="command" value="!voice" required></label>
+          <label><span data-pt="Duração em segundos">Duration in seconds</span><input name="duration" type="number" min="1" max="300" value="20" required></label>
+          <label><span data-pt="Mínimo de Bits (0 desativa)">Minimum Bits (0 disables)</span><input name="minimum_bits" type="number" min="0" value="0" required></label>
+          <label><span data-pt="Recompensa (nome ou ID)">Reward (name or ID)</span><input name="reward"></label>
+          <label class="check"><input name="moderators_only" type="checkbox" checked><span data-pt="Somente streamer e moderadores">Broadcaster and moderators only</span></label>
+          <div class="buttons"><button id="connect" type="submit" data-pt="Conectar">Connect</button><button id="disconnect" type="button" data-pt="Desconectar">Disconnect</button></div>
+          <div class="buttons"><button id="test" type="button" data-pt="Testar efeito">Test effect</button><button id="normal" type="button" data-pt="Voltar ao normal">Return to normal</button></div>
+        </form>
+        <a href="https://www.twitch.tv/activate" target="_blank" rel="noopener" data-pt="Abrir ativação da Twitch">Open Twitch activation</a>
+        <p id="twitch-status" role="status"></p><p id="effect-status"></p>
+      </section>
+    </div>
+    <footer><a href="/front/" data-pt="Interface original e ferramentas avançadas">Original interface and advanced tools</a><span>127.0.0.1</span></footer>
+  </main>
+</body>
+</html>

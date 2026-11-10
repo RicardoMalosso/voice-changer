@@ -11,8 +11,8 @@ from urllib.request import urlopen
 import webbrowser
 
 
-def open_when_ready(port, process, native_client, timeout=120):
-    url = f"http://localhost:{port}/front/"
+def open_when_ready(port, process, native_client, timeout=120, frontend="front"):
+    url = f"http://localhost:{port}/{frontend}/"
     deadline = time.monotonic() + timeout
     while process.is_alive() and time.monotonic() < deadline:
         try:
@@ -46,3 +46,4 @@ def open_window(url, native_client):
         subprocess.Popen(["explorer.exe", url])
         return True
     return webbrowser.open(url)
+
