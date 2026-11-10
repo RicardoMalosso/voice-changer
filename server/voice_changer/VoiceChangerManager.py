@@ -76,6 +76,7 @@ class VoiceChangerManager(ServerDeviceCallbacks):
         self.params = params
         self.voiceChanger: VoiceChanger = None
         self.settings: VoiceChangerManagerSettings = VoiceChangerManagerSettings()
+        self.twitch_pass_through: bool | None = None
 
         self.modelSlotManager = ModelSlotManager.get_instance(self.params.model_dir)
         # スタティックな情報を収集
@@ -362,7 +363,10 @@ class VoiceChangerManager(ServerDeviceCallbacks):
         return self.get_info()
 
     def changeVoice(self, receivedData: AudioInOut):
-        if self.settings.passThrough is True:  # パススルー
+        pass_through = self.twitch_pass_through
+        if pass_through is None:
+            pass_through = self.settings.passThrough
+        if pass_through:
             return receivedData, []
 
         if hasattr(self, "voiceChanger") is True:

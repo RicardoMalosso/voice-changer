@@ -1,3 +1,5 @@
+**This fork:** [Twitch chat, Bits, and Channel Points setup](TWITCH.md).
+
 [日本語](/README.md) /
 [英語](/docs_i18n/README_en.md) /
 [韓国語](/docs_i18n/README_ko.md)/

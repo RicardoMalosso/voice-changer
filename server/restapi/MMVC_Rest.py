@@ -11,6 +11,7 @@ from mods.log_control import VoiceChangaerLogger
 from voice_changer.VoiceChangerManager import VoiceChangerManager
 
 from restapi.MMVC_Rest_Hello import MMVC_Rest_Hello
+from restapi.Twitch import twitch_router
 from restapi.MMVC_Rest_VoiceChanger import MMVC_Rest_VoiceChanger
 from restapi.MMVC_Rest_Fileuploader import MMVC_Rest_Fileuploader
 from const import MODEL_DIR_STATIC, UPLOAD_DIR, getFrontendPath, TMP_DIR
@@ -104,6 +105,8 @@ class MMVC_Rest:
             app_fastapi.include_router(restVoiceChanger.router)
             fileUploader = MMVC_Rest_Fileuploader(voiceChangerManager)
             app_fastapi.include_router(fileUploader.router)
+
+            app_fastapi.include_router(twitch_router(voiceChangerManager))
 
             cls._instance = app_fastapi
             logger.info("[Voice Changer] MMVC_Rest initializing... done.")
