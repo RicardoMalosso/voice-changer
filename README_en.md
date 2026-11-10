@@ -1,3 +1,5 @@
+**This fork:** [Twitch chat, Bits, and Channel Points setup](TWITCH.md).
+
 ## VC Client
 
 [Japanese](/README_ja.md) [Korean](/README_ko.md) [Russian](/README_ru.md)
